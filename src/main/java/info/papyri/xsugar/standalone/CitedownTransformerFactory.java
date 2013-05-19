@@ -8,19 +8,19 @@ import org.apache.commons.pool.*;
 import org.apache.commons.pool.impl.*;
 
 public class CitedownTransformerFactory implements PoolableObjectFactory {
-  private String grammar = null;
+  private String extension = null;
 
-  public CitedownTransformerFactory(String input_grammar) {
-    grammar = input_grammar;
+  public CitedownTransformerFactory(String input_extension) {
+    extension = input_extension;
   }
   
   public Object makeObject() {
-    if(grammar == null) {
+    if(extension == null) {
       return new CitedownStandaloneTransformer();
     }
     else {
       try {
-        return new CitedownStandaloneTransformer(grammar);
+        return new CitedownStandaloneTransformer(extension);
       }
       catch (Throwable t) {
         return new CitedownStandaloneTransformer();
@@ -32,11 +32,11 @@ public class CitedownTransformerFactory implements PoolableObjectFactory {
   }
 
   public void activateObject(Object obj) {
-    if(grammar != null) {
+    if(extension != null) {
       if(obj instanceof CitedownStandaloneTransformer) {
         CitedownStandaloneTransformer transformer = (CitedownStandaloneTransformer) obj;
         try {
-          transformer.initializeTransformer(grammar);
+          transformer.initializeTransformer(extension);
         }
         catch (Throwable t) {
         }

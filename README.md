@@ -1,6 +1,6 @@
-# XSugar Standalone
+# Citedown Standalone
 
-Standalone XSugar transformer servlet.
+Standalone Citedown transformer servlet.
 
 ## Requirements
 
@@ -27,10 +27,9 @@ The servlet takes POST requests (at any URL) for performing transforms.
 
 Request Parameters:
 
-* `content`: contains the XML or Leiden+
-* `type`: contains a string identifying the XSugar grammar to use (so we
-  can use this for e.g. translation Leiden as well)
-* `direction`: `xml2nonxml` or `nonxml2xml`
+* `content`: contains the Markdown
+* `type`: contains a string identifying the Markdown extensions to use (so we
+  can use this for e.g. Citedown, normal Markdown, etc.)
 
 The response should be JSON, with a provision for indicating
 and returning errors, including line/col.:

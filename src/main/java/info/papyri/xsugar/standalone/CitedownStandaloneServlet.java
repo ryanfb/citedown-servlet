@@ -12,12 +12,14 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 
+import org.pegdown.*;
+
 public class CitedownStandaloneServlet extends HttpServlet
 {
   private HashMap<String,CitedownTransformerPool> transformers = null;
   private ConcurrentHashMap transformationLocks = null;
 
-  private static String[] known_grammars = {"epidoc", "translation_epidoc","commentary"};
+  private static String[] known_extensions = {"citedown", "markdown"};
 
   /**
    * Servlet init, called upon first request.
@@ -33,10 +35,10 @@ public class CitedownStandaloneServlet extends HttpServlet
     transformers = new HashMap<String,CitedownTransformerPool>();
     transformationLocks = new ConcurrentHashMap();
 
-    System.out.println("Initializing known-grammars...");
-    for (String grammar : known_grammars) {
-      System.out.println(grammar);
-      initTransformerPool(grammar);
+    System.out.println("Initializing known-extensions...");
+    for (String extension : known_extensions) {
+      System.out.println(extension);
+      initTransformerPool(extension);
     }
     System.out.println("Done.");
   }
@@ -47,16 +49,10 @@ public class CitedownStandaloneServlet extends HttpServlet
   private CitedownTransformerPool initTransformerPool(String transformer_name)
   {
     CitedownTransformerPool transformer = null;
-    URL url = this.getClass().getClassLoader().getResource(transformer_name + ".xsg");
-    StringWriter url_writer = new StringWriter();
 
     try {
-      IOUtils.copy(url.openStream(), url_writer, java.nio.charset.Charset.forName("UTF-8").name());
-
-      transformer = new CitedownTransformerPool(new CitedownTransformerFactory(url_writer.toString()));
+      transformer = new CitedownTransformerPool(new CitedownTransformerFactory(transformer_name));
       transformers.put(transformer_name, transformer);
-    }
-    catch (IOException e) {
     }
     catch (Throwable t) {
     }
@@ -82,17 +78,16 @@ public class CitedownStandaloneServlet extends HttpServlet
    * Perform a Citedown transform.
    *
    * @param content content to be transformed
-   * @param transform_type type of transform (name of grammar)
-   * @param direction direction of transform ("xml2nonxml" or "nonxml2xml")
+   * @param transform_type type of transform (name of extension)
    * @return string containing the result of running the transform
    */
-  private String doTransform(String content, String transform_type, String direction)
-    throws org.jdom.JDOMException, java.lang.Exception, java.io.IOException
+  private String doTransform(String content, String transform_type)
+    throws java.lang.Exception, java.io.IOException
   {
     String result = null;
     CitedownTransformerPool pool = getTransformerPool(transform_type);
     CitedownStandaloneTransformer transformer = (CitedownStandaloneTransformer) pool.borrowObject();
-    String key = transformer.cacheKey(direction, content);
+    String key = transformer.cacheKey(content);
     pool.returnObject(transformer);
 
     // We use ConcurrentHashMap's atomic putIfAbsent here because otherwise multiple threads
@@ -112,41 +107,7 @@ public class CitedownStandaloneServlet extends HttpServlet
     transformer = (CitedownStandaloneTransformer) pool.borrowObject();
 
     try {
-      if (direction.equals("xml2nonxml"))
-      {
-        if (transform_type.contains("epidoc")) {
-          try {
-            result = ""; // doSplitTransform(content, transformer, direction, new EpiDocSplitter(), new LeidenPlusSplitter());
-          }
-          catch (/* dk.brics.grammar.parser.ParseException e */ Exception e) {
-            throw e;
-            // System.out.println("Parse exception in split transform, trying full transform");
-            // result = transformer.XMLToNonXML(content);
-          }
-        }
-        else {
-          result = transformer.XMLToNonXML(content);
-        }
-      }
-      else if (direction.equals("nonxml2xml"))
-      {
-        if (transform_type.contains("epidoc")) {
-          try {
-            result = ""; // doSplitTransform(content, transformer, direction, new LeidenPlusSplitter(), new EpiDocSplitter());
-          }
-          catch (/* dk.brics.grammar.parser.ParseException */ Exception e) {
-            throw e;
-            // System.out.println("Parse exception in split transform, trying full transform");
-            // result = transformer.nonXMLToXML(StringEscapeUtils.unescapeHtml(content));
-          }
-        }
-        else {
-          result = transformer.nonXMLToXML(StringEscapeUtils.unescapeHtml(content));
-        }
-      }
-      else {
-        result = "Bad direction " + direction;
-      }
+      result = transformer.transformToHtml(content); //nonXMLToXML(StringEscapeUtils.unescapeHtml(content));
     }
     catch (Exception e) {
       System.out.println("Released lock for " + key);
@@ -183,12 +144,10 @@ public class CitedownStandaloneServlet extends HttpServlet
     out.println("<form method=\"POST\" action=\"\"/>");
     out.println("<textarea name=\"content\" rows=\"20\" cols=\"80\"></textarea>");
     out.println("<select name=\"type\">");
-    for (String grammar : known_grammars) {
-      out.println("<option value=\"" + grammar + "\">" + grammar + "</option>");
+    for (String extension : known_extensions) {
+      out.println("<option value=\"" + extension + "\">" + extension + "</option>");
     }
     out.println("</select>");
-    out.println("<input type=\"radio\" name=\"direction\" value=\"xml2nonxml\" checked />XML->Non-XML&nbsp;&nbsp");
-    out.println("<input type=\"radio\" name=\"direction\" value=\"nonxml2xml\" />Non-XML->XML<br />");
     out.println("<input type=\"submit\" value=\"Submit\" />");
     out.println("</form>");
     out.println("session=" + request.getSession(true).getId());
@@ -205,7 +164,6 @@ public class CitedownStandaloneServlet extends HttpServlet
   {
     String param_content = request.getParameter("content");
     String param_type = request.getParameter("type");
-    String param_direction = request.getParameter("direction");
     
     boolean parse_exception = false;
     String result = null;
@@ -218,7 +176,7 @@ public class CitedownStandaloneServlet extends HttpServlet
     response.setContentType("application/json;charset=UTF-8");
     
     try {
-      result = doTransform(param_content, param_type, param_direction);
+      result = doTransform(param_content, param_type);
       response.setStatus(HttpServletResponse.SC_OK);
     }
     catch (/* dk.brics.grammar.parser.ParseException */ Exception e) {

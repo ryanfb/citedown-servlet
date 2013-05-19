@@ -44,11 +44,6 @@
       <!-- used for fast-md5 -->
       <id>jboss-thirdparty-releases</id>
       <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/</url>
-      </repository>
-    <repository>
-      <!-- used to get around maven whining that we can't use a within-project jar -->
-      <id>xsugar-releases</id>
-      <url>https://raw.github.com/papyri/xsugar/master/src/standalone/mvn/releases</url>
     </repository>
   </repositories>
   
@@ -75,9 +70,11 @@
       <version>1.5.6</version>
     </dependency>
     <dependency>
-      <groupId>dk.brics.xsugar</groupId>
-      <artifactId>xsugar</artifactId>
-      <version>1.2-2</version>
+      <groupId>org.pegdown</groupId>
+      <artifactId>pegdown</artifactId>
+      <version>1.2.1</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/pegdown-assembly-1.2.1.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>org.apache.jcs</groupId>
