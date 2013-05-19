@@ -1,8 +1,5 @@
 package info.papyri.xsugar.standalone;
 
-import info.papyri.xsugar.splitter.EpiDocSplitter;
-import info.papyri.xsugar.splitter.LeidenPlusSplitter;
-import info.papyri.xsugar.splitter.SplitterJoiner;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
@@ -15,9 +12,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 
-public class XSugarStandaloneServlet extends HttpServlet
+public class CitedownStandaloneServlet extends HttpServlet
 {
-  private HashMap<String,XSugarTransformerPool> transformers = null;
+  private HashMap<String,CitedownTransformerPool> transformers = null;
   private ConcurrentHashMap transformationLocks = null;
 
   private static String[] known_grammars = {"epidoc", "translation_epidoc","commentary"};
@@ -33,7 +30,7 @@ public class XSugarStandaloneServlet extends HttpServlet
   {
     super.init(config);
 
-    transformers = new HashMap<String,XSugarTransformerPool>();
+    transformers = new HashMap<String,CitedownTransformerPool>();
     transformationLocks = new ConcurrentHashMap();
 
     System.out.println("Initializing known-grammars...");
@@ -47,16 +44,16 @@ public class XSugarStandaloneServlet extends HttpServlet
   /**
    * Initialize a transformer pool based on a string with the name (used to access a resource).
    */
-  private XSugarTransformerPool initTransformerPool(String transformer_name)
+  private CitedownTransformerPool initTransformerPool(String transformer_name)
   {
-    XSugarTransformerPool transformer = null;
+    CitedownTransformerPool transformer = null;
     URL url = this.getClass().getClassLoader().getResource(transformer_name + ".xsg");
     StringWriter url_writer = new StringWriter();
 
     try {
       IOUtils.copy(url.openStream(), url_writer, java.nio.charset.Charset.forName("UTF-8").name());
 
-      transformer = new XSugarTransformerPool(new XSugarTransformerFactory(url_writer.toString()));
+      transformer = new CitedownTransformerPool(new CitedownTransformerFactory(url_writer.toString()));
       transformers.put(transformer_name, transformer);
     }
     catch (IOException e) {
@@ -70,9 +67,9 @@ public class XSugarStandaloneServlet extends HttpServlet
   /**
    * Get the transformer pool for a given name, optionally initializing it if not already present.
    */
-  private XSugarTransformerPool getTransformerPool(String transformer_name)
+  private CitedownTransformerPool getTransformerPool(String transformer_name)
   {
-    XSugarTransformerPool transformer = transformers.get(transformer_name);
+    CitedownTransformerPool transformer = transformers.get(transformer_name);
     if (transformer == null) {
       System.out.println("Cache miss for " + transformer_name);
 
@@ -80,85 +77,9 @@ public class XSugarStandaloneServlet extends HttpServlet
     }
     return transformer;
   }
- 
-  /**
-   * Perform an XSugar transform, trying to split the input and join the results.
-   */ 
-  private String doSplitTransform(String content, XSugarStandaloneTransformer transformer, String direction, SplitterJoiner splitter, SplitterJoiner joiner)
-    throws org.jdom.JDOMException, dk.brics.grammar.parser.ParseException, Exception
-  {
-    //add counter to display with split processing to see which split we are working in
-    int split_counter = 0;
-    //line counter primed with 1 because the first chunk has only 1 line added at the end
-    // and will subtract 2 for the lines added at beginning and end of a chunk below
-    Integer line_counter = 0; 
-    
-    List<String> split_results = null;
-    try {
-       split_results = splitter.split(content);
-    }
-    catch (org.xml.sax.SAXParseException e) {
-      System.out.println("SAX Parse exception, doing transform normally");
-      return direction.equals("xml2nonxml") ? transformer.XMLToNonXML(content) : transformer.nonXMLToXML(content);
-    }
-    catch (java.lang.StringIndexOutOfBoundsException e) {
-      System.out.println("Split exception, doing transform normally");
-      return direction.equals("xml2nonxml") ? transformer.XMLToNonXML(content) : transformer.nonXMLToXML(content);
-    }
-    if (split_results.size() == 1) {
-      System.out.println("Single chunk, doing transform normally");
-      return direction.equals("xml2nonxml") ? transformer.XMLToNonXML(content) : transformer.nonXMLToXML(content);
-    }
-    ArrayList<String> results_list = new ArrayList();
-    System.out.println("Split into " + split_results.size());
-    for (String split_item : split_results) {
-      split_counter++;
-      
-      try {
-        String item_result;
-        if(direction.equals("xml2nonxml")) {
-          item_result = transformer.XMLToNonXML(split_item);
-        } else {
-          item_result = transformer.nonXMLToXML(split_item);
-        }
-        //add up the lines successfully transformed for adjusting line counter on parse exception if it occurs
-        //subtract 2 for the lines added at the beginning and end of a chunk
-        line_counter = line_counter + (StringUtils.countMatches(split_item, "\n") - 2);
-        results_list.add(item_result);
-      }
-      catch (org.jdom.input.JDOMParseException e) {
-        System.out.println("Error transforming:\n" + split_item + "\n message = " + e.getMessage() + "\n cause = " + e.getCause() + "\n line = " + e.getLineNumber() + "\n column = " + e.getColumnNumber() + "\n partial doc = " + e.getPartialDocument());
-        throw e;
-      }
-      catch (dk.brics.grammar.parser.ParseException e) {
-        if (direction.equals("nonxml2xml")) { 
-          if (split_results.size() < 5) {
-            System.out.println("Parse exception in small split transform, trying full transform");
-            return transformer.nonXMLToXML(StringEscapeUtils.unescapeHtml(content));
-          }
-          else {
-            int error_line = e.getLocation().getLine();
-            int error_col = e.getLocation().getColumn();
-            e.setLocation(new dk.brics.grammar.parser.Location("dummy.txt", 0, error_line+line_counter, error_col)); //index, line, col
-          }
-        }
-        else { //direction is xml2nonxml
-          
-          if (split_counter > 1) { //adjust line counter if error is not in the first chunk
-            int error_line = e.getLocation().getLine();
-            int error_col = e.getLocation().getColumn();
-            e.setLocation(new dk.brics.grammar.parser.Location("dummy.txt", 0, error_line+line_counter, error_col)); //index, line, col
-          }
-        }
-        throw e;
-      } //catch ParseException
-    } //for split_results loop
-    System.out.println("Joining from " + results_list.size());
-    return joiner.join(results_list);
-  }
 
   /**
-   * Perform an XSugar transform.
+   * Perform a Citedown transform.
    *
    * @param content content to be transformed
    * @param transform_type type of transform (name of grammar)
@@ -166,11 +87,11 @@ public class XSugarStandaloneServlet extends HttpServlet
    * @return string containing the result of running the transform
    */
   private String doTransform(String content, String transform_type, String direction)
-    throws dk.brics.grammar.parser.ParseException, org.jdom.JDOMException, java.lang.Exception, java.io.IOException
+    throws org.jdom.JDOMException, java.lang.Exception, java.io.IOException
   {
     String result = null;
-    XSugarTransformerPool pool = getTransformerPool(transform_type);
-    XSugarStandaloneTransformer transformer = (XSugarStandaloneTransformer) pool.borrowObject();
+    CitedownTransformerPool pool = getTransformerPool(transform_type);
+    CitedownStandaloneTransformer transformer = (CitedownStandaloneTransformer) pool.borrowObject();
     String key = transformer.cacheKey(direction, content);
     pool.returnObject(transformer);
 
@@ -188,16 +109,16 @@ public class XSugarStandaloneServlet extends HttpServlet
 
     transformationLock.lock();
     System.out.println("Acquired lock for " + key);
-    transformer = (XSugarStandaloneTransformer) pool.borrowObject();
+    transformer = (CitedownStandaloneTransformer) pool.borrowObject();
 
     try {
       if (direction.equals("xml2nonxml"))
       {
         if (transform_type.contains("epidoc")) {
           try {
-            result = doSplitTransform(content, transformer, direction, new EpiDocSplitter(), new LeidenPlusSplitter());
+            result = ""; // doSplitTransform(content, transformer, direction, new EpiDocSplitter(), new LeidenPlusSplitter());
           }
-          catch (dk.brics.grammar.parser.ParseException e) {
+          catch (/* dk.brics.grammar.parser.ParseException e */ Exception e) {
             throw e;
             // System.out.println("Parse exception in split transform, trying full transform");
             // result = transformer.XMLToNonXML(content);
@@ -211,9 +132,9 @@ public class XSugarStandaloneServlet extends HttpServlet
       {
         if (transform_type.contains("epidoc")) {
           try {
-            result = doSplitTransform(content, transformer, direction, new LeidenPlusSplitter(), new EpiDocSplitter());
+            result = ""; // doSplitTransform(content, transformer, direction, new LeidenPlusSplitter(), new EpiDocSplitter());
           }
-          catch (dk.brics.grammar.parser.ParseException e) {
+          catch (/* dk.brics.grammar.parser.ParseException */ Exception e) {
             throw e;
             // System.out.println("Parse exception in split transform, trying full transform");
             // result = transformer.nonXMLToXML(StringEscapeUtils.unescapeHtml(content));
@@ -256,9 +177,9 @@ public class XSugarStandaloneServlet extends HttpServlet
     PrintWriter out = response.getWriter();
 
     out.println("<html>");
-    out.println("<head><title>XSugarStandaloneServlet</title></head>");
+    out.println("<head><title>CitedownStandaloneServlet</title></head>");
     out.println("<body>");
-    out.println("<h1>XSugarStandaloneServlet</h1>");
+    out.println("<h1>CitedownStandaloneServlet</h1>");
     out.println("<form method=\"POST\" action=\"\"/>");
     out.println("<textarea name=\"content\" rows=\"20\" cols=\"80\"></textarea>");
     out.println("<select name=\"type\">");
@@ -276,7 +197,7 @@ public class XSugarStandaloneServlet extends HttpServlet
   }
 
   /**
-   * Handle a servlet POST request (serves JSON result of running XSugar transform).
+   * Handle a servlet POST request (serves JSON result of running Citedown transform).
    */
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -300,12 +221,12 @@ public class XSugarStandaloneServlet extends HttpServlet
       result = doTransform(param_content, param_type, param_direction);
       response.setStatus(HttpServletResponse.SC_OK);
     }
-    catch (dk.brics.grammar.parser.ParseException e) {
+    catch (/* dk.brics.grammar.parser.ParseException */ Exception e) {
       response.setStatus(HttpServletResponse.SC_OK);
       parse_exception = true;
-      cause = e.getMessage();
-      line = e.getLocation().getLine();
-      column = e.getLocation().getColumn();
+      cause = "no cause"; // e.getMessage();
+      line = 0; // e.getLocation().getLine();
+      column = 0; // e.getLocation().getColumn();
     }
     catch (Throwable t) {
       response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

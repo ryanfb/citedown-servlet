@@ -2,28 +2,28 @@ package info.papyri.xsugar.standalone;
 
 import java.io.*;
 
-import info.papyri.xsugar.standalone.XSugarStandaloneTransformer;
+import info.papyri.xsugar.standalone.CitedownStandaloneTransformer;
 
 import org.apache.commons.pool.*;
 import org.apache.commons.pool.impl.*;
 
-public class XSugarTransformerFactory implements PoolableObjectFactory {
+public class CitedownTransformerFactory implements PoolableObjectFactory {
   private String grammar = null;
 
-  public XSugarTransformerFactory(String input_grammar) {
+  public CitedownTransformerFactory(String input_grammar) {
     grammar = input_grammar;
   }
   
   public Object makeObject() {
     if(grammar == null) {
-      return new XSugarStandaloneTransformer();
+      return new CitedownStandaloneTransformer();
     }
     else {
       try {
-        return new XSugarStandaloneTransformer(grammar);
+        return new CitedownStandaloneTransformer(grammar);
       }
       catch (Throwable t) {
-        return new XSugarStandaloneTransformer();
+        return new CitedownStandaloneTransformer();
       }
     }
   }
@@ -33,8 +33,8 @@ public class XSugarTransformerFactory implements PoolableObjectFactory {
 
   public void activateObject(Object obj) {
     if(grammar != null) {
-      if(obj instanceof XSugarStandaloneTransformer) {
-        XSugarStandaloneTransformer transformer = (XSugarStandaloneTransformer) obj;
+      if(obj instanceof CitedownStandaloneTransformer) {
+        CitedownStandaloneTransformer transformer = (CitedownStandaloneTransformer) obj;
         try {
           transformer.initializeTransformer(grammar);
         }

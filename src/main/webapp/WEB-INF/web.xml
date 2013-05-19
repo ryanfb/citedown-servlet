@@ -5,11 +5,11 @@
    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" 
    version="2.5">
   <servlet>
-    <servlet-name>XSugarStandaloneServlet</servlet-name>
-    <servlet-class>info.papyri.xsugar.standalone.XSugarStandaloneServlet</servlet-class>
+    <servlet-name>CitedownStandaloneServlet</servlet-name>
+    <servlet-class>info.papyri.xsugar.standalone.CitedownStandaloneServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>XSugarStandaloneServlet</servlet-name>
+    <servlet-name>CitedownStandaloneServlet</servlet-name>
     <url-pattern>/*</url-pattern>
   </servlet-mapping>
 </web-app>

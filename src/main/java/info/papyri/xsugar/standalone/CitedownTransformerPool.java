@@ -2,18 +2,18 @@ package info.papyri.xsugar.standalone;
 
 import java.io.*;
 
-import info.papyri.xsugar.standalone.XSugarTransformerFactory;
+import info.papyri.xsugar.standalone.CitedownTransformerFactory;
 
 import org.apache.commons.pool.*;
 import org.apache.commons.pool.impl.*;
 
-public class XSugarTransformerPool extends GenericObjectPool {
-  public XSugarTransformerPool(XSugarTransformerFactory objFactory) {
+public class CitedownTransformerPool extends GenericObjectPool {
+  public CitedownTransformerPool(CitedownTransformerFactory objFactory) {
     super(objFactory);
     this.setMaxActive(64);
   }
 
-  public XSugarTransformerPool(XSugarTransformerFactory objFactory, GenericObjectPool.Config config) {
+  public CitedownTransformerPool(CitedownTransformerFactory objFactory, GenericObjectPool.Config config) {
     super(objFactory, config);
   }
 }

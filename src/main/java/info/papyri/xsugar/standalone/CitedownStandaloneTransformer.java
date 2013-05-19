@@ -5,21 +5,6 @@ import java.io.*;
 import org.jdom.JDOMException;
 import org.xml.sax.SAXParseException;
 
-import dk.brics.grammar.Grammar;
-import dk.brics.grammar.ast.AST;
-import dk.brics.grammar.operations.GrammarChecker;
-import dk.brics.grammar.operations.Unparser;
-import dk.brics.grammar.parser.Location;
-import dk.brics.grammar.parser.ParseException;
-import dk.brics.grammar.parser.Parser;
-import dk.brics.misc.Loader;
-import dk.brics.xmlgraph.XMLGraph;
-import dk.brics.xsugar.reversibility.ReversibilityChecker;
-import dk.brics.xsugar.stylesheet.*;
-import dk.brics.xsugar.validator.*;
-import dk.brics.xsugar.xml.*;
-import dk.brics.xsugar.*;
-
 import org.apache.jcs.JCS;
 import org.apache.jcs.access.exception.CacheException;
 
@@ -31,9 +16,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import info.papyri.xsugar.standalone.TransformResult;
 
 /**
- * Holds an instance of an XSugar transformer, with methods for performing transforms using it.
+ * Holds an instance of an Citedown transformer, with methods for performing transforms using it.
  */
-public class XSugarStandaloneTransformer
+public class CitedownStandaloneTransformer
 {
   private Stylesheet stylesheet;
   private Grammar l_grammar;
@@ -58,28 +43,28 @@ public class XSugarStandaloneTransformer
   private JCS cache = null;
 
   // We use a class-shared initialization lock because it seems that some things in
-  // the XSugar initialization can get into race conditions/deadlock if multiple threads
+  // the Citedown initialization can get into race conditions/deadlock if multiple threads
   // call them at the same time.
   private static final Lock initializationLock = new ReentrantLock(true);
 
   /**
    * Initialize an empty transformer.
    */
-  public XSugarStandaloneTransformer()
+  public CitedownStandaloneTransformer()
   {
   }
   
   /**
-   * Initialize a transformer for a given XSugar grammar.
+   * Initialize a transformer for a given Citedown grammar.
    */ 
-  public XSugarStandaloneTransformer(String grammar)
-    throws dk.brics.xsugar.XSugarException, IOException, ParseException, dk.brics.relaxng.converter.ParseException, InstantiationException,	IllegalAccessException, ClassNotFoundException
+  public CitedownStandaloneTransformer(String grammar)
+    throws IOException, ParseException, InstantiationException,	IllegalAccessException, ClassNotFoundException
   {
     this.initializeTransformer(grammar);
   }
 
   public synchronized void initializeTransformer(String grammar)
-    throws dk.brics.xsugar.XSugarException, IOException, ParseException, dk.brics.relaxng.converter.ParseException, InstantiationException,	IllegalAccessException, ClassNotFoundException
+    throws IOException, ParseException, InstantiationException,	IllegalAccessException, ClassNotFoundException
   {
     // This lock could probably be finer-grained, but this seems to solve the problem.
     initializationLock.lock();
@@ -167,7 +152,7 @@ public class XSugarStandaloneTransformer
    * Use this transformer to convert a non-XML string to XML.
    */ 
   public synchronized String nonXMLToXML(String text)
-    throws dk.brics.grammar.parser.ParseException
+    throws Exception
   {
     String result;
     String key = cacheKey("nonxml2xml", text);
@@ -181,7 +166,7 @@ public class XSugarStandaloneTransformer
         result = end_tag.fix(result);
         result = namespace_adder.fix(result);
       }
-      catch (dk.brics.grammar.parser.ParseException e) {
+      catch (/* dk.brics.grammar.parser.ParseException */ Exception e) {
         System.out.println("nonXMLToXML parse exception L+ text = " + text);
         //cachePut(key,new TransformResult(e));
         //commented out so errors not put in cache - we are getting erroneous errors and can't get by them
@@ -206,7 +191,7 @@ public class XSugarStandaloneTransformer
    * Use this transformer to convert an XML string to its non-XML representation.
    */ 
   public synchronized String XMLToNonXML(String xml)
-    throws org.jdom.JDOMException, dk.brics.grammar.parser.ParseException, IOException
+    throws org.jdom.JDOMException, IOException
   {
     String result;
     String key = cacheKey("xml2nonxml",xml);
@@ -220,7 +205,7 @@ public class XSugarStandaloneTransformer
         new ASTUnescaper().unescape(ast);
         result = unparsed_l_grammar.unparse(ast);
       }
-      catch (dk.brics.grammar.parser.ParseException e) {
+      catch (/* dk.brics.grammar.parser.ParseException */ Exception e) {
         System.out.println("XMLToNonXML parse exception XML = " + xml);
         //cachePut(key,new TransformResult(e));
         //see comment above in nonXMLToXML
