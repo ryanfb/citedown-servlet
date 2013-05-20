@@ -61,8 +61,12 @@ public class CitedownStandaloneTransformer
       System.out.println("Hash: " + extension_hash);
       
       try {
-        // TODO: a switch here for supported extension sets
-        processor = new PegDownProcessor(Extensions.CITE);
+        if(extension == "citedown") {
+          processor = new PegDownProcessor(Extensions.CITE);
+        }
+        else if(extension == "markdown") {
+          processor = new PegDownProcessor();
+        }
       }
       catch (Throwable t) {
         System.out.println("Error initializing transformer for " + extension);
