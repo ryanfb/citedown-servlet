@@ -12,7 +12,7 @@ import com.twmacinta.util.MD5;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.pegdown.*;
+import edu.harvard.chs.citedown.*;
 
 import info.papyri.xsugar.standalone.TransformResult;
 
