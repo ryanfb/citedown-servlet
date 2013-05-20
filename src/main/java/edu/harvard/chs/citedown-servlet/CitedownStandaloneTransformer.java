@@ -1,4 +1,4 @@
-package info.papyri.xsugar.standalone;
+package edu.harvard.chs.citedown_servlet;
 
 import java.io.*;
 
@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import edu.harvard.chs.citedown.*;
 
-import info.papyri.xsugar.standalone.TransformResult;
+import edu.harvard.chs.citedown_servlet.TransformResult;
 
 /**
  * Holds an instance of a Citedown transformer, with methods for performing transforms using it.

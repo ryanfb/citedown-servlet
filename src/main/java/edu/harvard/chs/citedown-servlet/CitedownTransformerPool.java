@@ -1,8 +1,8 @@
-package info.papyri.xsugar.standalone;
+package edu.harvard.chs.citedown_servlet;
 
 import java.io.*;
 
-import info.papyri.xsugar.standalone.CitedownTransformerFactory;
+import edu.harvard.chs.citedown_servlet.CitedownTransformerFactory;
 
 import org.apache.commons.pool.*;
 import org.apache.commons.pool.impl.*;

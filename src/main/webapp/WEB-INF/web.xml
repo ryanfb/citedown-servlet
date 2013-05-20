@@ -6,7 +6,7 @@
    version="2.5">
   <servlet>
     <servlet-name>CitedownStandaloneServlet</servlet-name>
-    <servlet-class>info.papyri.xsugar.standalone.CitedownStandaloneServlet</servlet-class>
+    <servlet-class>edu.harvard.chs.citedown_servlet.CitedownStandaloneServlet</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>CitedownStandaloneServlet</servlet-name>

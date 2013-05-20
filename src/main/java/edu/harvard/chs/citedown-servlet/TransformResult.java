@@ -1,4 +1,4 @@
-package info.papyri.xsugar.standalone;
+package edu.harvard.chs.citedown_servlet;
 
 import java.io.Serializable;
 
