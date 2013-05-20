@@ -17,7 +17,7 @@ import org.pegdown.*;
 public class CitedownStandaloneServlet extends HttpServlet
 {
   private HashMap<String,CitedownTransformerPool> transformers = null;
-  private ConcurrentHashMap transformationLocks = null;
+  private ConcurrentHashMap<String,ReentrantLock> transformationLocks = null;
 
   private static String[] known_extensions = {"citedown", "markdown"};
 
@@ -33,7 +33,7 @@ public class CitedownStandaloneServlet extends HttpServlet
     super.init(config);
 
     transformers = new HashMap<String,CitedownTransformerPool>();
-    transformationLocks = new ConcurrentHashMap();
+    transformationLocks = new ConcurrentHashMap<String,ReentrantLock>();
 
     System.out.println("Initializing known-extensions...");
     for (String extension : known_extensions) {
