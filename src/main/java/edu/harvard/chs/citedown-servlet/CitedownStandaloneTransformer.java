@@ -12,6 +12,8 @@ import com.twmacinta.util.MD5;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import java.util.Properties;
+
 import edu.harvard.chs.citedown.*;
 
 import edu.harvard.chs.citedown_servlet.TransformResult;
@@ -28,6 +30,21 @@ public class CitedownStandaloneTransformer
   
   private int extension_hash = 0;
   private JCS cache = null;
+
+  private static String citedown_version = getCitedownVersion();
+
+  private static String getCitedownVersion() {
+    Properties prop = new Properties();
+    try {
+      InputStream input_stream = CitedownStandaloneTransformer.class.getResourceAsStream("build.properties");
+      prop.load(input_stream);
+      input_stream.close();
+      return prop.getProperty("citedownVersion");
+    }
+    catch(IOException e) {
+      return "IOException";
+    }
+  }
 
   // We use a class-shared initialization lock because it seems that some things in
   // the Citedown initialization can get into race conditions/deadlock if multiple threads
@@ -90,7 +107,7 @@ public class CitedownStandaloneTransformer
    * Generate the cache key for this transformer based on the input text.
    *
    * Uses an MD5 of the input text, and generates keys in the form:
-   *   extension_hash:inputmd5
+   *   citedown_version:extension_hash:inputmd5
    * So all of the entries for a extension hash can be invalidated at once. 
    * See: http://jakarta.apache.org/jcs/faq.html#hierarchical-removal  
    */
@@ -99,10 +116,10 @@ public class CitedownStandaloneTransformer
     
     try {
       md5.Update(text.getBytes(charset));
-      return new String(extension_hash + ":" + md5.asHex());
+      return new String(citedown_version + ":" + extension_hash + ":" + md5.asHex());
     }
     catch (java.io.UnsupportedEncodingException e) {
-      return new String(extension_hash + ":" + text);
+      return new String(citedown_version + ":" + extension_hash + ":" + text);
     }
   }
  
