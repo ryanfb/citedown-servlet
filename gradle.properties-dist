@@ -1,0 +1,8 @@
+# Template properties file for cite library's gradle build.
+#
+# This project's build file uses the following three properties 
+# to upload artifacts to a Nexus repository using local authentication:
+
+nexusUser=
+nexusPassword=
+nexusRepo=

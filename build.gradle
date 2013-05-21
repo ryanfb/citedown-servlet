@@ -43,6 +43,18 @@ def allProcessResourcesTasks() {
   }
 }
 
+artifacts {
+  archives war
+}
+
+uploadArchives {
+    repositories.mavenDeployer {
+        repository(url: nexusRepo) {
+            authentication (userName: nexusUser, password: nexusPassword)
+        }
+    }
+}
+
 httpPort = 8988
 stopPort = 9451
 stopKey = 'foo'
