@@ -3,9 +3,10 @@ import org.apache.tools.ant.filters.*
 apply plugin: 'war'
 apply plugin: 'jetty'
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 group = "edu.harvard.chs"
-version = "0.0.1"
+version = "0.0.2"
 
 ext {
   citedownVersion = '1.2.1.0'
@@ -20,6 +21,18 @@ repositories {
         url "https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/"
     }
 }
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'eu.appsatori:gradle-fatjar-plugin:0.2-rc1'
+    }
+}
+
+apply plugin: 'fatjar'
 
 dependencies {
     compile group: 'commons-io', name: 'commons-io', version: '1.4'
@@ -43,17 +56,24 @@ def allProcessResourcesTasks() {
   }
 }
 
-artifacts {
-  archives war
-}
-
-uploadArchives {
-    repositories.mavenDeployer {
-        repository(url: nexusRepo) {
-            authentication (userName: nexusUser, password: nexusPassword)
+publishing {
+    publications {
+        maven(MavenPublication) {
+          artifact war
+          artifact source: fatJar, classifier: 'jar', extension: 'jar' 
+        }
+    }
+    repositories {
+        maven {
+            url nexusRepo
+            credentials {
+              username nexusUser
+              password nexusPassword
+            }
         }
     }
 }
+
 
 httpPort = 8988
 stopPort = 9451

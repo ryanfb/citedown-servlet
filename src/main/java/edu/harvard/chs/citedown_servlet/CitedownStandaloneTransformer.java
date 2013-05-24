@@ -133,6 +133,9 @@ public class CitedownStandaloneTransformer
     catch (CacheException e) {
       System.out.println("Problem caching!");
     }
+    catch (java.lang.NullPointerException npe) {
+      System.out.println("Problem caching - no cache!");
+    }
   }
 
   /**
@@ -143,8 +146,14 @@ public class CitedownStandaloneTransformer
   {
     String result;
     String key = cacheKey(markdown);
+    
+    TransformResult cache_result = null;
+    try {
+      cache_result = (TransformResult)cache.get(key);
+    }
+    catch (java.lang.NullPointerException npe) {
+    }
 
-    TransformResult cache_result = (TransformResult)cache.get(key);
     if (cache_result == null) {
       try {    
         result = processor.markdownToHtml(markdown);

@@ -110,8 +110,8 @@ public class CitedownStandaloneServlet extends HttpServlet
       result = transformer.transformToHtml(content); //nonXMLToXML(StringEscapeUtils.unescapeHtml(content));
     }
     catch (Exception e) {
+      e.printStackTrace();
       System.out.println("Released lock for " + key);
-      System.out.println(e.toString());
       // System.out.println(e.getLocation().getLine() + "," + e.getLocation().getColumn());
       // e.printStackTrace();
       throw e;
